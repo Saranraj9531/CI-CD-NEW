@@ -21,8 +21,8 @@ add('writable_dirs', []);
 
 
 // Hosts
-host('18.207.223.25') // Name of the server
-    ->hostname('18.207.223.25') // Hostname or IP address
+host('52.55.240.162') // Name of the server
+    ->hostname('52.55.240.162') // Hostname or IP address
     ->stage('production') // Deployment stage (production, staging, etc)
     ->user('root') // SSH user
     ->set('deploy_path', '/var/www/html'); // Deploy path    
