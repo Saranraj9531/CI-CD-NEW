@@ -21,7 +21,7 @@ add('writable_dirs', []);
 
 
 // Hosts
-host('root@ip-172-31-81-127') // Name of the server
+host('ip-172-31-81-127.ec2.internal') // Name of the server
     ->hostname('54.204.105.124') // Hostname or IP address
     ->stage('production') // Deployment stage (production, staging, etc)
     ->user('saran') // SSH user
