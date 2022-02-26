@@ -58,8 +58,8 @@ jobs:
         run: composer install
       - name: Setup Deployer
         uses: atymic/deployer-php-action@master
-        with:
-          ssh-public-key: ${{ secrets.SSH_PUBLIC_KEY }}      
+        with:    
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
           ssh-known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
       - name: Deploy to Prod
         env:
