@@ -1,32 +1,46 @@
 <?php
+
 namespace Deployer;
 
+// Include the Laravel & rsync recipes
 require 'recipe/laravel.php';
+require 'recipe/rsync.php';
 
-// Project name
-set('application', 'my_project');
+set('application', 'dep-demo');
+set('ssh_multiplexing', true); // Speeds up deployments
 
-// Project repository
-set('repository', 'https://github.com/Saranraj9531/ci-cd-example.git');
+set('rsync_src', function () {
+    return __DIR__; // If your project isn't in the root, you'll need to change this.
+});
 
-// [Optional] Allocate tty for git clone. Default value is false.
-set('git_tty', true); 
+// Configuring the rsync exclusions.
+// You'll want to exclude anything that you don't want on the production server.
+add('rsync', [
+    'exclude' => [
+        '.git',
+        '/.env',
+        '/storage/',
+        '/vendor/',
+        '/node_modules/',
+        '.github',
+        'deploy.php',
+    ],
+]);
 
-// Shared files/dirs between deploys 
-add('shared_files', []);
-add('shared_dirs', []);
-
-// Writable dirs by web server 
-add('writable_dirs', []);
-
+// Set up a deployer task to copy secrets to the server.
+// Since our secrets are stored in Gitlab, we can access them as env vars.
+task('deploy:secrets', function () {
+    file_put_contents(__DIR__ . '/.env', getenv('DOT_ENV'));
+    upload('.env', get('deploy_path') . '/shared');
+});
 
 // Hosts
-host('IP name: ip-172-31-81-127.ec2.internal') // Name of the server
-    ->hostname('54.204.105.124') // Hostname or IP address
-    ->stage('production') // Deployment stage (production, staging, etc)
-    ->user('root') // SSH user
-    ->set('deploy_path', '/var/www/html'); // Deploy path    
-    
+host('localhost') // Name of the server
+->hostname('18.117.181.244') // Hostname or IP address
+->stage('production') // Deployment stage (production, staging, etc)
+->user('ubuntu') // SSH user
+->set('deploy_path', '/var/www/html/php'); // Deploy path
+
 after('deploy:failed', 'deploy:unlock'); // Unlock after failed deploy
 
 desc('Deploy the application');
@@ -35,27 +49,18 @@ task('deploy', [
     'deploy:prepare',
     'deploy:lock',
     'deploy:release',
+    'rsync', // Deploy code & built assets
     'deploy:secrets', // Deploy secrets
     'deploy:shared',
     'deploy:vendors',
     'deploy:writable',
     'artisan:storage:link', // |
     'artisan:view:cache',   // |
-    'artisan:config:cache', // | Laravel specific steps 
+    'artisan:config:cache', // | Laravel specific steps
+    'artisan:queue:restart', // | 
     'artisan:optimize',     // |
     'artisan:migrate',      // |
     'deploy:symlink',
     'deploy:unlock',
     'cleanup',
 ]);
-
-// Set up a deployer task to copy secrets to the server. 
-// Grabs the dotenv file from the github secret
-task('deploy:secrets', function () {
-    file_put_contents(__DIR__ . '/.env', getenv('DOT_ENV'));
-    upload('.env', get('deploy_path') . '/shared');
-});
-
-// Migrate database before symlink new release.
-
-before('deploy:symlink', 'artisan:migrate');
